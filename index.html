@@ -1,0 +1,732 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Vinicius Dev · Soluções Digitais Full Stack</title>
+  <meta name="description" content="Automações, Sites, Dashboards, APIs e muito mais. Solicite seu orçamento.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+  <script type="module" src="https://unpkg.com/@splinetool/viewer@1.9.82/build/spline-viewer.js"></script>
+
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --cyan:        #63b3ed;
+      --cyan-bright: #90cdf4;
+      --purple:      #9f7aea;
+      --green:       #68d391;
+      --amber:       #f6ad55;
+      --text:        #e2e8f0;
+      --text-muted:  #718096;
+      --text-dim:    #4a5568;
+      --border:      rgba(99,179,237,0.15);
+      --border-glow: rgba(99,179,237,0.35);
+      --glass:       rgba(6, 8, 18, 0.72);
+      --glass-light: rgba(10, 14, 28, 0.85);
+      --dur:         280ms;
+    }
+
+    html, body {
+      width: 100%; height: 100%;
+      font-family: 'Space Grotesk', sans-serif;
+      overflow: hidden;
+      background: #04060f;
+      color: var(--text);
+    }
+
+    /* ═══════════════════════════════════════
+       SPLINE — tela cheia, acompanha mouse
+    ═══════════════════════════════════════ */
+    #spline-wrap {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+    }
+    spline-viewer {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+
+    /* ═══ OVERLAY BASE ═══ */
+    #overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 1;
+      pointer-events: none; /* deixa mouse passar para o Spline */
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Gradiente lateral para o form não sufocar o robô */
+    #overlay::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(
+        105deg,
+        transparent 0%,
+        transparent 38%,
+        rgba(4,6,15,0.55) 52%,
+        rgba(4,6,15,0.90) 65%,
+        rgba(4,6,15,0.98) 80%,
+        rgba(4,6,15,1.00) 100%
+      );
+      pointer-events: none;
+    }
+
+    /* ═══ GRID DOTS ═══ */
+    #overlay::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background-image: radial-gradient(circle, rgba(99,179,237,0.1) 1px, transparent 1px);
+      background-size: 40px 40px;
+      mask-image: radial-gradient(ellipse 60% 100% at 100% 50%, black 20%, transparent 70%);
+      pointer-events: none;
+    }
+
+    /* ═══════════════════════════════════════
+       HEADER TOP BAR
+    ═══════════════════════════════════════ */
+    #topbar {
+      position: relative;
+      z-index: 2;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 22px 44px;
+      pointer-events: all;
+    }
+
+    .logo {
+      display: flex; align-items: center; gap: 10px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 13px; font-weight: 700;
+      color: var(--cyan);
+      letter-spacing: 0.06em;
+    }
+    .logo-dot {
+      width: 8px; height: 8px;
+      background: var(--green);
+      border-radius: 50%;
+      box-shadow: 0 0 10px var(--green);
+      animation: blink 2s ease-in-out infinite;
+    }
+    @keyframes blink {
+      0%,100% { opacity:1; } 50% { opacity:0.3; }
+    }
+    .logo-name { color: var(--text); }
+    .logo-name span { color: var(--cyan); }
+
+    .nav-links {
+      display: flex; gap: 32px; list-style: none;
+      font-size: 13px; font-weight: 500;
+    }
+    .nav-links a {
+      color: var(--text-muted); text-decoration: none;
+      font-family: 'JetBrains Mono', monospace;
+      transition: color .2s;
+    }
+    .nav-links a:hover { color: var(--cyan); }
+
+    /* ═══════════════════════════════════════
+       MAIN CONTENT
+    ═══════════════════════════════════════ */
+    #main {
+      position: relative;
+      z-index: 2;
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      padding: 0 44px 0 0;
+      pointer-events: none;
+    }
+
+    /* ═══ CARD DO FORMULÁRIO ═══ */
+    .form-card {
+      pointer-events: all;
+      width: 460px;
+      max-height: calc(100vh - 200px);
+      overflow-y: auto;
+      background: var(--glass-light);
+      backdrop-filter: blur(28px) saturate(180%);
+      -webkit-backdrop-filter: blur(28px) saturate(180%);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 36px 36px 28px;
+      box-shadow:
+        0 0 0 1px rgba(255,255,255,0.04) inset,
+        0 40px 80px rgba(0,0,0,0.7),
+        0 0 60px rgba(99,179,237,0.05);
+      scrollbar-width: thin;
+      scrollbar-color: rgba(99,179,237,0.3) transparent;
+      animation: slideIn .7s cubic-bezier(.16,1,.3,1) both;
+    }
+    .form-card::-webkit-scrollbar { width: 4px; }
+    .form-card::-webkit-scrollbar-thumb { background: rgba(99,179,237,0.3); border-radius: 4px; }
+
+    @keyframes slideIn {
+      from { opacity:0; transform: translateX(40px); }
+      to   { opacity:1; transform: none; }
+    }
+
+    /* Cabeçalho do card */
+    .card-header { margin-bottom: 24px; }
+
+    .card-badge {
+      display: inline-flex; align-items: center; gap: 6px;
+      background: rgba(99,179,237,0.1);
+      border: 1px solid rgba(99,179,237,0.2);
+      border-radius: 100px; padding: 5px 12px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px; letter-spacing: 0.12em;
+      color: var(--cyan); text-transform: uppercase;
+      margin-bottom: 16px;
+    }
+    .card-badge::before {
+      content: ''; width: 6px; height: 6px;
+      background: var(--cyan); border-radius: 50%;
+      box-shadow: 0 0 8px var(--cyan);
+      animation: blink 1.5s ease-in-out infinite;
+    }
+
+    .card-title {
+      font-size: 26px; font-weight: 700; letter-spacing: -1px;
+      line-height: 1.15; margin-bottom: 6px;
+    }
+    .card-title span {
+      background: linear-gradient(135deg, var(--cyan-bright), var(--purple));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .card-sub {
+      font-size: 13px; color: var(--text-muted);
+      font-family: 'JetBrains Mono', monospace;
+    }
+    .card-sub::before { content: '// '; color: var(--text-dim); }
+
+    /* ── Campos ── */
+    .field { margin-bottom: 14px; }
+    .field label {
+      display: block; font-size: 10px; font-weight: 600;
+      letter-spacing: 0.1em; text-transform: uppercase;
+      color: var(--text-muted); margin-bottom: 6px;
+      font-family: 'JetBrains Mono', monospace;
+      transition: color var(--dur);
+    }
+    .field:focus-within label { color: var(--cyan); }
+
+    .field input,
+    .field textarea,
+    .field select {
+      width: 100%;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 11px 14px;
+      font-size: 14px; font-weight: 400;
+      color: var(--text);
+      font-family: 'Space Grotesk', sans-serif;
+      outline: none;
+      transition: border-color var(--dur), box-shadow var(--dur), background var(--dur);
+      resize: none;
+    }
+    .field input:focus,
+    .field textarea:focus,
+    .field select:focus {
+      background: rgba(99,179,237,0.06);
+      border-color: var(--cyan);
+      box-shadow: 0 0 0 3px rgba(99,179,237,0.1);
+    }
+    .field input::placeholder,
+    .field textarea::placeholder { color: var(--text-dim); }
+    .field select option { background: #0b0f1a; color: var(--text); }
+
+    .field textarea { height: 80px; }
+
+    /* Dois campos lado a lado */
+    .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+    /* ── SERVIÇOS — chips de seleção ── */
+    .services-label {
+      font-size: 10px; font-weight: 600; letter-spacing: 0.1em;
+      text-transform: uppercase; color: var(--text-muted);
+      font-family: 'JetBrains Mono', monospace; margin-bottom: 10px;
+      display: block;
+    }
+    .chips {
+      display: flex; flex-wrap: wrap; gap: 7px; margin-bottom: 14px;
+    }
+    .chip-input { display: none; }
+    .chip {
+      display: inline-flex; align-items: center; gap: 5px;
+      padding: 6px 12px;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid var(--border);
+      border-radius: 100px;
+      font-size: 12px; font-weight: 500;
+      color: var(--text-muted);
+      cursor: pointer;
+      transition: all .2s;
+      user-select: none;
+    }
+    .chip .chip-icon { font-size: 13px; }
+    .chip-input:checked + .chip {
+      background: rgba(99,179,237,0.15);
+      border-color: var(--cyan);
+      color: var(--cyan-bright);
+      box-shadow: 0 0 12px rgba(99,179,237,0.15);
+    }
+    .chip:hover {
+      border-color: rgba(99,179,237,0.4);
+      color: var(--text);
+    }
+
+    /* ── Botão Submit ── */
+    .btn-submit {
+      width: 100%; padding: 14px 20px; margin-top: 6px;
+      background: linear-gradient(135deg, var(--cyan) 0%, #4299e1 50%, var(--purple) 100%);
+      color: #04060f;
+      border: none; border-radius: 10px;
+      font-size: 14px; font-weight: 700; font-family: 'Space Grotesk', sans-serif;
+      letter-spacing: 0.05em; text-transform: uppercase;
+      cursor: pointer;
+      transition: opacity .25s, transform .2s, box-shadow .25s;
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+      position: relative; overflow: hidden;
+      box-shadow: 0 4px 24px rgba(99,179,237,0.35);
+    }
+    .btn-submit:hover {
+      opacity: .92;
+      transform: translateY(-2px);
+      box-shadow: 0 8px 32px rgba(99,179,237,0.5);
+    }
+    .btn-submit:active { transform: translateY(0); }
+    .btn-submit.loading { pointer-events: none; opacity: .8; }
+    .btn-submit.loading .btn-text { opacity: 0; }
+    .btn-spinner {
+      position: absolute; display: none;
+      width: 18px; height: 18px;
+      border: 2px solid rgba(4,6,15,.3);
+      border-top-color: #04060f; border-radius: 50%;
+      animation: spin .6s linear infinite;
+    }
+    .btn-submit.loading .btn-spinner { display: block; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .btn-ripple {
+      position: absolute; border-radius: 50%;
+      background: rgba(255,255,255,0.18);
+      transform: scale(0); animation: ripple .55s linear; pointer-events: none;
+    }
+    @keyframes ripple { to { transform: scale(4); opacity: 0; } }
+
+    /* ═══════════════════════════════════════
+       TICKER DE PROJETOS
+    ═══════════════════════════════════════ */
+    #ticker-wrap {
+      position: relative;
+      z-index: 2;
+      pointer-events: all;
+      padding: 18px 0;
+      overflow: hidden;
+      border-top: 1px solid var(--border);
+      background: rgba(4, 6, 15, 0.65);
+      backdrop-filter: blur(12px);
+      mask-image: linear-gradient(90deg, transparent 0%, black 8%, black 92%, transparent 100%);
+    }
+
+    .ticker-label {
+      position: absolute;
+      left: 44px; top: 50%;
+      transform: translateY(-50%);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px; letter-spacing: 0.12em;
+      color: var(--text-dim); text-transform: uppercase;
+      z-index: 3;
+      background: rgba(4,6,15,0.8);
+      padding: 4px 8px;
+      border-radius: 4px;
+    }
+
+    .ticker-track {
+      display: flex;
+      gap: 16px;
+      width: max-content;
+      animation: ticker 65s linear infinite;
+      will-change: transform;
+    }
+
+    @keyframes ticker {
+      from { transform: translateX(0); }
+      to   { transform: translateX(-50%); }
+    }
+
+    .project-card {
+      display: flex; align-items: center; gap: 12px;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 10px 18px;
+      white-space: nowrap;
+      cursor: default;
+      transition: border-color .2s, background .2s;
+      flex-shrink: 0;
+    }
+    .project-card:hover {
+      border-color: var(--border-glow);
+      background: rgba(99,179,237,0.06);
+    }
+    .project-icon {
+      font-size: 18px;
+      width: 32px; height: 32px;
+      display: flex; align-items: center; justify-content: center;
+      background: rgba(99,179,237,0.1);
+      border-radius: 8px;
+      flex-shrink: 0;
+    }
+    .project-info { display: flex; flex-direction: column; gap: 2px; }
+    .project-name { font-size: 13px; font-weight: 600; color: var(--text); }
+    .project-type {
+      font-size: 10px; font-family: 'JetBrains Mono', monospace;
+      color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.08em;
+    }
+    .project-tag {
+      font-size: 10px; font-weight: 600;
+      padding: 2px 8px; border-radius: 100px;
+      font-family: 'JetBrains Mono', monospace;
+      letter-spacing: 0.06em;
+    }
+    .tag-green { background: rgba(104,211,145,0.15); color: var(--green); }
+    .tag-cyan  { background: rgba(99,179,237,0.15);  color: var(--cyan); }
+    .tag-purple{ background: rgba(159,122,234,0.15); color: var(--purple); }
+    .tag-amber { background: rgba(246,173,85,0.15);  color: var(--amber); }
+
+    /* ═══ TOAST ═══ */
+    .toast {
+      position: fixed; bottom: 100px; left: 50%;
+      transform: translateX(-50%) translateY(60px);
+      background: rgba(10,14,28,0.95);
+      border: 1px solid var(--border-glow);
+      color: var(--text);
+      padding: 14px 32px; border-radius: 100px;
+      font-size: 13px; font-weight: 500;
+      font-family: 'JetBrains Mono', monospace;
+      pointer-events: none;
+      transition: transform .4s cubic-bezier(.16,1,.3,1), opacity .4s;
+      opacity: 0; white-space: nowrap; z-index: 100;
+      box-shadow: 0 8px 30px rgba(0,0,0,.6), 0 0 30px rgba(99,179,237,0.1);
+      backdrop-filter: blur(16px);
+    }
+    .toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+
+    /* ═══ SPOTLIGHT — clareia onde o mouse passa ═══ */
+    #spotlight {
+      position: fixed;
+      inset: 0;
+      z-index: 2;
+      pointer-events: none;
+      background: radial-gradient(
+        circle 100px at var(--mx, 50%) var(--my, 50%),
+        rgba(99, 179, 237, 0.07) 0%,
+        rgba(99, 179, 237, 0.02) 55%,
+        transparent 100%
+      );
+      transition: background 0.05s;
+    }
+
+    /* ═══ PARTÍCULAS ═══ */
+    .fp {
+      position: fixed; border-radius: 50%;
+      pointer-events: none; z-index: 0;
+      animation: fp-rise linear infinite;
+      opacity: 0;
+    }
+    @keyframes fp-rise {
+      0%   { opacity: 0; transform: translateY(0) scale(.8); }
+      10%  { opacity: .8; }
+      90%  { opacity: .4; }
+      100% { opacity: 0; transform: translateY(-110vh) scale(1.3); }
+    }
+
+    /* ═══ RESPONSIVO ═══ */
+    @media (max-width: 900px) {
+      .nav-links { display: none; }
+      #main { padding: 0 20px; justify-content: center; }
+      .form-card { width: 100%; max-width: 480px; }
+    }
+    @media (max-width: 520px) {
+      #topbar { padding: 16px 20px; }
+      .form-card { padding: 28px 24px 24px; }
+      .card-title { font-size: 22px; }
+      .field-row { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- Spotlight de mouse -->
+<div id="spotlight"></div>
+
+<!-- SPLINE — tela cheia, robô segue o mouse -->
+<div id="spline-wrap">
+  <spline-viewer
+    url="https://prod.spline.design/iT3P-qiw0DcuW40E/scene.splinecode"
+    loading-anim-type="none"
+  ></spline-viewer>
+</div>
+
+<!-- OVERLAY — conteúdo da página -->
+<div id="overlay">
+
+  <!-- TOP BAR -->
+  <nav id="topbar">
+    <div class="logo">
+      <div class="logo-dot"></div>
+      <span class="logo-name"><span>VN</span>_DEV</span>
+      &nbsp;·&nbsp; Full Stack Solutions
+    </div>
+    <ul class="nav-links">
+      <li><a href="#">projetos</a></li>
+      <li><a href="#">stack</a></li>
+      <li><a href="#">contato</a></li>
+    </ul>
+  </nav>
+
+  <!-- MAIN: FORMULÁRIO -->
+  <div id="main">
+    <div class="form-card">
+
+      <div class="card-header">
+        <div class="card-badge">Solicitar Orçamento</div>
+        <h1 class="card-title">
+          Vamos criar algo<br><span>incrível juntos?</span>
+        </h1>
+        <p class="card-sub">preencha e retorno em até 24h</p>
+      </div>
+
+      <form id="quoteForm" novalidate>
+
+        <!-- Nome + WhatsApp -->
+        <div class="field-row">
+          <div class="field">
+            <label for="nome">nome</label>
+            <input type="text" id="nome" placeholder="Seu nome" required>
+          </div>
+          <div class="field">
+            <label for="whatsapp">whatsapp</label>
+            <input type="tel" id="whatsapp" placeholder="(11) 9 9999-9999" required>
+          </div>
+        </div>
+
+        <!-- E-mail -->
+        <div class="field">
+          <label for="email">e-mail</label>
+          <input type="email" id="email" placeholder="voce@empresa.com" required>
+        </div>
+
+        <!-- Empresa (opcional) -->
+        <div class="field">
+          <label for="empresa">empresa <span style="opacity:.4;font-size:9px">(opcional)</span></label>
+          <input type="text" id="empresa" placeholder="Nome da empresa ou projeto">
+        </div>
+
+        <!-- Serviços — chips -->
+        <span class="services-label">qual solução você precisa?</span>
+        <div class="chips" id="chips-wrap">
+
+          <input class="chip-input" type="checkbox" id="s1" name="servicos" value="Automação de Processos">
+          <label class="chip" for="s1"><span class="chip-icon">⚙️</span> Automação</label>
+
+          <input class="chip-input" type="checkbox" id="s2" name="servicos" value="Site / Landing Page">
+          <label class="chip" for="s2"><span class="chip-icon">🌐</span> Site / Landing Page</label>
+
+          <input class="chip-input" type="checkbox" id="s3" name="servicos" value="Dashboard / BI">
+          <label class="chip" for="s3"><span class="chip-icon">📊</span> Dashboard</label>
+
+          <input class="chip-input" type="checkbox" id="s4" name="servicos" value="Integração de APIs">
+          <label class="chip" for="s4"><span class="chip-icon">🔗</span> Integração / API</label>
+
+          <input class="chip-input" type="checkbox" id="s5" name="servicos" value="Bot / IA">
+          <label class="chip" for="s5"><span class="chip-icon">🤖</span> Bot / IA</label>
+
+          <input class="chip-input" type="checkbox" id="s6" name="servicos" value="App Web / Mobile">
+          <label class="chip" for="s6"><span class="chip-icon">📱</span> App Web / Mobile</label>
+
+          <input class="chip-input" type="checkbox" id="s7" name="servicos" value="Power Automate / SharePoint">
+          <label class="chip" for="s7"><span class="chip-icon">☁️</span> Power Platform</label>
+
+          <input class="chip-input" type="checkbox" id="s8" name="servicos" value="Consultoria Técnica">
+          <label class="chip" for="s8"><span class="chip-icon">🧠</span> Consultoria</label>
+
+        </div>
+
+        <!-- Orçamento -->
+        <div class="field">
+          <label for="budget">faixa de investimento</label>
+          <select id="budget">
+            <option value="" disabled selected>Selecione uma faixa...</option>
+            <option value="500-1500">R$ 500 – R$ 1.500</option>
+            <option value="1500-3000">R$ 1.500 – R$ 3.000</option>
+            <option value="3000-6000">R$ 3.000 – R$ 6.000</option>
+            <option value="6000+">Acima de R$ 6.000</option>
+            <option value="conversar">Prefiro conversar primeiro</option>
+          </select>
+        </div>
+
+        <!-- Descrição -->
+        <div class="field">
+          <label for="descricao">descreva seu projeto</label>
+          <textarea id="descricao" placeholder="Conte o que você precisa, problema a resolver, prazo desejado..."></textarea>
+        </div>
+
+        <!-- Submit -->
+        <button type="submit" class="btn-submit" id="btnSubmit">
+          <span class="btn-text">🚀&nbsp; Solicitar Orçamento</span>
+          <div class="btn-spinner"></div>
+        </button>
+
+      </form>
+
+    </div>
+  </div>
+
+  <!-- TICKER DE PROJETOS -->
+  <div id="ticker-wrap">
+    <span class="ticker-label">// projetos entregues</span>
+    <div class="ticker-track" id="tickerTrack">
+      <!-- Projetos (duplicados para loop infinito) -->
+    </div>
+  </div>
+
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ═══════════════════════════════════
+   PROJETOS — DADOS DO TICKER
+═══════════════════════════════════ */
+const projects = [
+  { icon:'📊', name:'Dashboard Analytics',      type:'Power BI + SharePoint',   tag:'green',  label:'Entregue' },
+  { icon:'🤖', name:'Bot WhatsApp + N8N',        type:'Automação via Webhook',    tag:'cyan',   label:'Em prod.' },
+  { icon:'⚙️',  name:'Automação de Cadastros',   type:'Power Automate + Forms',  tag:'purple', label:'Entregue' },
+  { icon:'🌐', name:'Portal NEO',                type:'React + SharePoint API',  tag:'green',  label:'Entregue' },
+  { icon:'📱', name:'App de Agendamento',         type:'Supabase + Next.js',      tag:'cyan',   label:'Em prod.' },
+  { icon:'🔗', name:'Integração ERP + CRM',      type:'REST API + Webhooks',      tag:'amber',  label:'Entregue' },
+  { icon:'🧠', name:'IA Classificação de Docs',  type:'Python + OpenAI API',     tag:'purple', label:'Beta' },
+  { icon:'📋', name:'Sistema de OS Digital',     type:'React + Firebase',         tag:'green',  label:'Entregue' },
+  { icon:'⚡',  name:'Pipeline de E-mails',       type:'Power Automate + Outlook','tag':'amber', label:'Entregue' },
+  { icon:'🏟️', name:'Quadra Livre v2',           type:'Next.js + Supabase',       tag:'cyan',   label:'Live' },
+  { icon:'📈', name:'Relatório de Entregas',     type:'React + MS Lists',         tag:'green',  label:'Entregue' },
+  { icon:'💬', name:'Chatbot Atendimento',       type:'N8N + WhatsApp API',       tag:'purple', label:'Em prod.' },
+];
+
+const tagClass = { green:'tag-green', cyan:'tag-cyan', purple:'tag-purple', amber:'tag-amber' };
+
+function buildCard(p) {
+  return `<div class="project-card">
+    <div class="project-icon">${p.icon}</div>
+    <div class="project-info">
+      <span class="project-name">${p.name}</span>
+      <span class="project-type">${p.type}</span>
+    </div>
+    <span class="project-tag ${tagClass[p.tag]}">${p.label}</span>
+  </div>`;
+}
+
+const track = document.getElementById('tickerTrack');
+// Duplica para loop infinito
+const html = [...projects, ...projects].map(buildCard).join('');
+track.innerHTML = html;
+
+/* ═══════════════════════════════════
+   SPOTLIGHT — mouse normal + brilho
+═══════════════════════════════════ */
+const spotlight = document.getElementById('spotlight');
+document.addEventListener('mousemove', e => {
+  spotlight.style.setProperty('--mx', e.clientX + 'px');
+  spotlight.style.setProperty('--my', e.clientY + 'px');
+});
+
+/* ═══════════════════════════════════
+   PARTÍCULAS FLUTUANTES
+═══════════════════════════════════ */
+const colors = ['#63b3ed','#9f7aea','#68d391','#4299e1','#b794f4','#f6ad55'];
+for (let i = 0; i < 18; i++) {
+  const p = document.createElement('div');
+  p.className = 'fp';
+  const sz = 1.5 + Math.random() * 3.5;
+  const col = colors[Math.floor(Math.random() * colors.length)];
+  p.style.cssText = `
+    width:${sz}px;height:${sz}px;
+    left:${Math.random()*100}%;
+    bottom:-10px;
+    background:${col};
+    box-shadow:0 0 ${sz*4}px ${col};
+    animation-duration:${12+Math.random()*18}s;
+    animation-delay:${Math.random()*20}s;
+  `;
+  document.body.appendChild(p);
+}
+
+/* ═══════════════════════════════════
+   TOAST
+═══════════════════════════════════ */
+function showToast(msg, dur = 4000) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(t._t);
+  t._t = setTimeout(() => t.classList.remove('show'), dur);
+}
+
+/* ═══════════════════════════════════
+   RIPPLE NO BOTÃO
+═══════════════════════════════════ */
+document.getElementById('btnSubmit').addEventListener('click', function(e) {
+  const r = document.createElement('span');
+  r.className = 'btn-ripple';
+  const rect = this.getBoundingClientRect();
+  const size = Math.max(rect.width, rect.height);
+  r.style.cssText = `width:${size}px;height:${size}px;left:${e.clientX-rect.left-size/2}px;top:${e.clientY-rect.top-size/2}px`;
+  this.appendChild(r);
+  r.addEventListener('animationend', () => r.remove());
+});
+
+/* ═══════════════════════════════════
+   SUBMIT DO FORMULÁRIO
+═══════════════════════════════════ */
+document.getElementById('quoteForm').addEventListener('submit', async function(e) {
+  e.preventDefault();
+  const nome     = document.getElementById('nome').value.trim();
+  const email    = document.getElementById('email').value.trim();
+  const whatsapp = document.getElementById('whatsapp').value.trim();
+  const desc     = document.getElementById('descricao').value.trim();
+  const servicos = [...document.querySelectorAll('.chip-input:checked')].map(c => c.value);
+
+  if (!nome || !email || !whatsapp) {
+    showToast('⚠  Preencha nome, e-mail e WhatsApp.');
+    return;
+  }
+  if (servicos.length === 0) {
+    showToast('⚠  Selecione ao menos um tipo de solução.');
+    return;
+  }
+
+  const btn = document.getElementById('btnSubmit');
+  btn.classList.add('loading');
+  await new Promise(r => setTimeout(r, 2000));
+  btn.classList.remove('loading');
+
+  showToast(`✓ Solicitação enviada, ${nome.split(' ')[0]}! Entro em contato em breve 🚀`);
+  this.reset();
+  document.querySelectorAll('.chip-input').forEach(c => c.checked = false);
+});
+</script>
+
+</body>
+</html>
