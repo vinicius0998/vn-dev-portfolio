@@ -122,7 +122,11 @@
       min-height: 100vh;
       display: flex; align-items: center;
       padding: 120px 48px 80px;
+      pointer-events: none; /* deixa o mouse passar para o Spline */
     }
+
+    .hero-content,
+    .scroll-hint { pointer-events: all; }
 
     #hero::before {
       content: '';
