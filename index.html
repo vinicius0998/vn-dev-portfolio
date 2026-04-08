@@ -23,286 +23,569 @@
       --text-dim:    #4a5568;
       --border:      rgba(99,179,237,0.15);
       --border-glow: rgba(99,179,237,0.35);
-      --glass:       rgba(6, 8, 18, 0.72);
       --glass-light: rgba(10, 14, 28, 0.85);
       --dur:         280ms;
     }
 
-    html, body {
-      width: 100%; height: 100%;
+    html { scroll-behavior: smooth; }
+
+    body {
       font-family: 'Space Grotesk', sans-serif;
-      overflow: hidden;
       background: #04060f;
       color: var(--text);
+      overflow-x: hidden;
     }
 
-    /* ═══════════════════════════════════════
-       SPLINE — tela cheia, acompanha mouse
-    ═══════════════════════════════════════ */
+    /* ═══ SPLINE — tela cheia fixo ═══ */
     #spline-wrap {
       position: fixed;
       inset: 0;
       z-index: 0;
     }
-    spline-viewer {
-      width: 100%;
-      height: 100%;
-      display: block;
-    }
+    spline-viewer { width: 100%; height: 100%; display: block; }
 
-    /* ═══ OVERLAY BASE ═══ */
-    #overlay {
-      position: fixed;
-      inset: 0;
-      z-index: 1;
-      pointer-events: none; /* deixa mouse passar para o Spline */
-      display: flex;
-      flex-direction: column;
-    }
-
-    /* Gradiente lateral para o form não sufocar o robô */
-    #overlay::before {
-      content: '';
-      position: absolute;
-      inset: 0;
-      background: linear-gradient(
-        105deg,
-        transparent 0%,
-        transparent 38%,
-        rgba(4,6,15,0.55) 52%,
-        rgba(4,6,15,0.90) 65%,
-        rgba(4,6,15,0.98) 80%,
-        rgba(4,6,15,1.00) 100%
+    /* ═══ SPOTLIGHT ═══ */
+    #spotlight {
+      position: fixed; inset: 0; z-index: 1; pointer-events: none;
+      background: radial-gradient(
+        circle 100px at var(--mx,50%) var(--my,50%),
+        rgba(99,179,237,0.07) 0%, rgba(99,179,237,0.02) 55%, transparent 100%
       );
-      pointer-events: none;
     }
 
-    /* ═══ GRID DOTS ═══ */
-    #overlay::after {
-      content: '';
-      position: absolute;
-      inset: 0;
-      background-image: radial-gradient(circle, rgba(99,179,237,0.1) 1px, transparent 1px);
-      background-size: 40px 40px;
-      mask-image: radial-gradient(ellipse 60% 100% at 100% 50%, black 20%, transparent 70%);
-      pointer-events: none;
+    /* ═══ PARTÍCULAS ═══ */
+    .fp {
+      position: fixed; border-radius: 50%;
+      pointer-events: none; z-index: 1;
+      animation: fp-rise linear infinite; opacity: 0;
     }
+    @keyframes fp-rise {
+      0%   { opacity: 0; transform: translateY(0) scale(.8); }
+      10%  { opacity: .8; }
+      90%  { opacity: .4; }
+      100% { opacity: 0; transform: translateY(-110vh) scale(1.3); }
+    }
+
+    @keyframes blink { 0%,100% { opacity:1; } 50% { opacity:0.3; } }
+    @keyframes spin   { to { transform: rotate(360deg); } }
 
     /* ═══════════════════════════════════════
-       HEADER TOP BAR
+       TOPBAR FIXO
     ═══════════════════════════════════════ */
     #topbar {
-      position: relative;
-      z-index: 2;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 22px 44px;
-      pointer-events: all;
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 20px 48px;
+      background: rgba(4,6,15,0.3);
+      backdrop-filter: blur(16px);
+      border-bottom: 1px solid transparent;
+      transition: background .35s, border-color .35s;
+    }
+    #topbar.scrolled {
+      background: rgba(4,6,15,0.92);
+      border-color: var(--border);
     }
 
     .logo {
       display: flex; align-items: center; gap: 10px;
       font-family: 'JetBrains Mono', monospace;
-      font-size: 13px; font-weight: 700;
-      color: var(--cyan);
-      letter-spacing: 0.06em;
+      font-size: 13px; font-weight: 700; color: var(--cyan);
+      letter-spacing: 0.06em; text-decoration: none;
     }
     .logo-dot {
-      width: 8px; height: 8px;
-      background: var(--green);
-      border-radius: 50%;
+      width: 8px; height: 8px; background: var(--green); border-radius: 50%;
       box-shadow: 0 0 10px var(--green);
       animation: blink 2s ease-in-out infinite;
-    }
-    @keyframes blink {
-      0%,100% { opacity:1; } 50% { opacity:0.3; }
     }
     .logo-name { color: var(--text); }
     .logo-name span { color: var(--cyan); }
 
-    .nav-links {
-      display: flex; gap: 32px; list-style: none;
-      font-size: 13px; font-weight: 500;
-    }
+    .nav-links { display: flex; gap: 28px; list-style: none; align-items: center; }
     .nav-links a {
       color: var(--text-muted); text-decoration: none;
-      font-family: 'JetBrains Mono', monospace;
+      font-family: 'JetBrains Mono', monospace; font-size: 12px;
       transition: color .2s;
     }
     .nav-links a:hover { color: var(--cyan); }
+    .nav-links .nav-cta {
+      background: linear-gradient(135deg, var(--cyan), var(--purple));
+      color: #04060f; padding: 8px 18px; border-radius: 8px;
+      font-weight: 700;
+    }
+    .nav-links .nav-cta:hover { opacity: .88; color: #04060f; }
 
     /* ═══════════════════════════════════════
-       MAIN CONTENT
+       HERO SECTION
     ═══════════════════════════════════════ */
-    #main {
-      position: relative;
-      z-index: 2;
-      flex: 1;
-      display: flex;
-      align-items: center;
-      justify-content: flex-end;
-      padding: 0 44px 0 0;
+    #hero {
+      position: relative; z-index: 2;
+      min-height: 100vh;
+      display: flex; align-items: center;
+      padding: 120px 48px 80px;
+    }
+
+    #hero::before {
+      content: '';
+      position: absolute; inset: 0;
+      background: linear-gradient(
+        105deg,
+        rgba(4,6,15,0.97) 0%,
+        rgba(4,6,15,0.88) 28%,
+        rgba(4,6,15,0.5)  48%,
+        rgba(4,6,15,0.15) 60%,
+        transparent 72%
+      );
+      pointer-events: none;
+    }
+    #hero::after {
+      content: '';
+      position: absolute; inset: 0;
+      background-image: radial-gradient(circle, rgba(99,179,237,0.07) 1px, transparent 1px);
+      background-size: 44px 44px;
+      mask-image: radial-gradient(ellipse 55% 90% at 0% 50%, black 20%, transparent 70%);
       pointer-events: none;
     }
 
-    /* ═══ CARD DO FORMULÁRIO ═══ */
-    .form-card {
-      pointer-events: all;
-      width: 460px;
-      max-height: calc(100vh - 200px);
-      overflow-y: auto;
-      background: var(--glass-light);
-      backdrop-filter: blur(28px) saturate(180%);
-      -webkit-backdrop-filter: blur(28px) saturate(180%);
-      border: 1px solid var(--border);
-      border-radius: 20px;
-      padding: 36px 36px 28px;
-      box-shadow:
-        0 0 0 1px rgba(255,255,255,0.04) inset,
-        0 40px 80px rgba(0,0,0,0.7),
-        0 0 60px rgba(99,179,237,0.05);
-      scrollbar-width: thin;
-      scrollbar-color: rgba(99,179,237,0.3) transparent;
-      animation: slideIn .7s cubic-bezier(.16,1,.3,1) both;
-    }
-    .form-card::-webkit-scrollbar { width: 4px; }
-    .form-card::-webkit-scrollbar-thumb { background: rgba(99,179,237,0.3); border-radius: 4px; }
-
-    @keyframes slideIn {
-      from { opacity:0; transform: translateX(40px); }
-      to   { opacity:1; transform: none; }
+    .hero-content {
+      position: relative; max-width: 560px;
     }
 
-    /* Cabeçalho do card */
-    .card-header { margin-bottom: 24px; }
-
-    .card-badge {
-      display: inline-flex; align-items: center; gap: 6px;
+    .hero-eyebrow {
+      display: inline-flex; align-items: center; gap: 8px;
       background: rgba(99,179,237,0.1);
-      border: 1px solid rgba(99,179,237,0.2);
-      border-radius: 100px; padding: 5px 12px;
+      border: 1px solid rgba(99,179,237,0.22);
+      border-radius: 100px; padding: 6px 14px;
       font-family: 'JetBrains Mono', monospace;
-      font-size: 10px; letter-spacing: 0.12em;
+      font-size: 10px; letter-spacing: 0.13em;
       color: var(--cyan); text-transform: uppercase;
+      margin-bottom: 28px;
+      animation: fadeUp .7s .1s both;
+    }
+    .hero-eyebrow::before {
+      content: ''; width: 6px; height: 6px;
+      background: var(--green); border-radius: 50%;
+      box-shadow: 0 0 8px var(--green);
+      animation: blink 1.5s ease-in-out infinite;
+    }
+
+    .hero-title {
+      font-size: clamp(38px, 5.2vw, 64px);
+      font-weight: 700; line-height: 1.06;
+      letter-spacing: -2.5px; margin-bottom: 22px;
+      animation: fadeUp .7s .2s both;
+    }
+    .hero-title .grad {
+      background: linear-gradient(135deg, var(--cyan-bright) 0%, var(--purple) 100%);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .hero-desc {
+      font-size: 16px; color: var(--text-muted); line-height: 1.7;
+      margin-bottom: 36px; max-width: 430px;
+      animation: fadeUp .7s .3s both;
+    }
+
+    .hero-actions {
+      display: flex; gap: 12px; flex-wrap: wrap;
+      animation: fadeUp .7s .4s both;
+    }
+
+    .btn-primary {
+      display: inline-flex; align-items: center; gap: 8px;
+      background: linear-gradient(135deg, var(--cyan) 0%, #4299e1 50%, var(--purple) 100%);
+      color: #04060f; border: none; border-radius: 10px;
+      padding: 14px 28px; font-size: 14px; font-weight: 700;
+      font-family: 'Space Grotesk', sans-serif; letter-spacing: 0.04em;
+      cursor: pointer; text-decoration: none;
+      box-shadow: 0 4px 24px rgba(99,179,237,0.35);
+      transition: transform .2s, box-shadow .2s, opacity .2s;
+    }
+    .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 32px rgba(99,179,237,0.5); }
+
+    .btn-ghost {
+      display: inline-flex; align-items: center; gap: 8px;
+      background: rgba(255,255,255,0.06); color: var(--text);
+      border: 1px solid var(--border); border-radius: 10px;
+      padding: 14px 28px; font-size: 14px; font-weight: 600;
+      font-family: 'Space Grotesk', sans-serif; cursor: pointer;
+      text-decoration: none;
+      transition: border-color .2s, background .2s, transform .2s;
+    }
+    .btn-ghost:hover {
+      border-color: var(--border-glow); background: rgba(99,179,237,0.08);
+      transform: translateY(-2px);
+    }
+
+    .hero-stats {
+      display: flex; gap: 0; margin-top: 52px;
+      padding-top: 32px; border-top: 1px solid var(--border);
+      animation: fadeUp .7s .5s both;
+    }
+    .stat {
+      display: flex; flex-direction: column; gap: 4px;
+      padding-right: 36px; margin-right: 36px;
+      border-right: 1px solid var(--border);
+    }
+    .stat:last-child { border-right: none; padding-right: 0; margin-right: 0; }
+    .stat-num {
+      font-family: 'JetBrains Mono', monospace; font-size: 30px;
+      font-weight: 700; color: var(--cyan-bright); line-height: 1;
+    }
+    .stat-label { font-size: 12px; color: var(--text-muted); }
+
+    .scroll-hint {
+      position: absolute; bottom: 32px; left: 48px;
+      display: flex; align-items: center; gap: 10px;
+      font-family: 'JetBrains Mono', monospace; font-size: 10px;
+      letter-spacing: 0.12em; color: var(--text-dim); text-transform: uppercase;
+      text-decoration: none; animation: fadeUp .7s .7s both;
+    }
+    .scroll-hint svg { animation: scrollBounce 1.8s ease-in-out infinite; }
+    @keyframes scrollBounce {
+      0%,100% { transform: translateY(0); }
+      50% { transform: translateY(5px); }
+    }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(24px); }
+      to   { opacity: 1; transform: none; }
+    }
+
+    /* ═══════════════════════════════════════
+       CASES / PROJETOS
+    ═══════════════════════════════════════ */
+    #cases {
+      position: relative; z-index: 3;
+      background: rgba(4,6,15,0.96);
+      backdrop-filter: blur(20px);
+      padding: 90px 48px;
+      border-top: 1px solid var(--border);
+    }
+
+    .section-eyebrow {
+      display: flex; align-items: center; justify-content: center; gap: 12px;
+      font-family: 'JetBrains Mono', monospace; font-size: 10px;
+      letter-spacing: 0.15em; color: var(--cyan); text-transform: uppercase;
       margin-bottom: 16px;
     }
-    .card-badge::before {
+    .section-eyebrow::before, .section-eyebrow::after {
+      content: ''; flex: 1; max-width: 80px;
+      height: 1px; background: linear-gradient(90deg, transparent, rgba(99,179,237,0.4));
+    }
+    .section-eyebrow::after { background: linear-gradient(270deg, transparent, rgba(99,179,237,0.4)); }
+
+    .section-header {
+      text-align: center; margin-bottom: 56px;
+    }
+    .section-title {
+      font-size: clamp(28px, 3.5vw, 44px);
+      font-weight: 700; letter-spacing: -1.5px; line-height: 1.1;
+      margin-bottom: 12px;
+    }
+    .section-title span {
+      background: linear-gradient(135deg, var(--cyan-bright), var(--purple));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .section-sub {
+      font-size: 15px; color: var(--text-muted);
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    .cases-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 20px;
+      max-width: 1100px;
+      margin: 0 auto 60px;
+    }
+
+    .case-card {
+      background: rgba(10,14,28,0.85);
+      border: 1px solid var(--border);
+      border-radius: 16px; padding: 28px 24px;
+      position: relative; overflow: hidden;
+      transition: border-color .3s, transform .3s, box-shadow .3s;
+      opacity: 0; transform: translateY(20px);
+      transition: opacity .5s, transform .5s, border-color .3s, box-shadow .3s;
+    }
+    .case-card.visible { opacity: 1; transform: none; }
+    .case-card::after {
+      content: '';
+      position: absolute; top: 0; left: 0; right: 0; height: 1px;
+      background: linear-gradient(90deg, transparent, var(--border-glow), transparent);
+      opacity: 0; transition: opacity .3s;
+    }
+    .case-card:hover {
+      border-color: var(--border-glow);
+      transform: translateY(-5px) !important;
+      box-shadow: 0 24px 48px rgba(0,0,0,0.5), 0 0 36px rgba(99,179,237,0.07);
+    }
+    .case-card:hover::after { opacity: 1; }
+
+    .case-icon-wrap {
+      width: 46px; height: 46px; border-radius: 12px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 21px; margin-bottom: 18px; flex-shrink: 0;
+    }
+    .ic-cyan   { background: rgba(99,179,237,0.12); }
+    .ic-purple { background: rgba(159,122,234,0.12); }
+    .ic-green  { background: rgba(104,211,145,0.12); }
+    .ic-amber  { background: rgba(246,173,85,0.12); }
+
+    .case-name {
+      font-size: 15px; font-weight: 700; color: var(--text);
+      margin-bottom: 8px; letter-spacing: -0.3px;
+    }
+    .case-desc {
+      font-size: 13px; color: var(--text-muted);
+      line-height: 1.6; margin-bottom: 16px;
+    }
+    .case-tags { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 18px; }
+    .case-tag {
+      font-size: 10px; font-family: 'JetBrains Mono', monospace;
+      padding: 3px 9px; border-radius: 6px;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.07);
+      color: var(--text-dim); letter-spacing: 0.05em;
+    }
+    .case-footer {
+      display: flex; align-items: center; justify-content: space-between;
+      padding-top: 14px; border-top: 1px solid var(--border);
+    }
+    .case-client {
+      font-size: 11px; color: var(--text-dim);
+      font-family: 'JetBrains Mono', monospace;
+    }
+    .case-status {
+      font-size: 10px; font-weight: 600;
+      padding: 3px 10px; border-radius: 100px;
+      font-family: 'JetBrains Mono', monospace; letter-spacing: 0.06em;
+    }
+    .s-green  { background: rgba(104,211,145,0.14); color: var(--green); }
+    .s-cyan   { background: rgba(99,179,237,0.14);  color: var(--cyan); }
+    .s-purple { background: rgba(159,122,234,0.14); color: var(--purple); }
+    .s-amber  { background: rgba(246,173,85,0.14);  color: var(--amber); }
+
+    /* ── Ticker ── */
+    #ticker-wrap {
+      overflow: hidden;
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+      padding: 14px 0;
+      mask-image: linear-gradient(90deg, transparent 0%, black 8%, black 92%, transparent 100%);
+    }
+    .ticker-track {
+      display: flex; gap: 14px; width: max-content;
+      animation: ticker 65s linear infinite; will-change: transform;
+    }
+    @keyframes ticker {
+      from { transform: translateX(0); }
+      to   { transform: translateX(-50%); }
+    }
+    .project-card {
+      display: flex; align-items: center; gap: 12px;
+      background: rgba(255,255,255,0.04); border: 1px solid var(--border);
+      border-radius: 10px; padding: 10px 18px; white-space: nowrap;
+      cursor: default; flex-shrink: 0;
+      transition: border-color .2s, background .2s;
+    }
+    .project-card:hover { border-color: var(--border-glow); background: rgba(99,179,237,0.06); }
+    .project-icon {
+      font-size: 17px; width: 32px; height: 32px;
+      display: flex; align-items: center; justify-content: center;
+      background: rgba(99,179,237,0.1); border-radius: 8px; flex-shrink: 0;
+    }
+    .project-info { display: flex; flex-direction: column; gap: 2px; }
+    .project-name { font-size: 13px; font-weight: 600; color: var(--text); }
+    .project-type {
+      font-size: 10px; font-family: 'JetBrains Mono', monospace;
+      color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.08em;
+    }
+    .project-tag {
+      font-size: 10px; font-weight: 600;
+      padding: 2px 8px; border-radius: 100px;
+      font-family: 'JetBrains Mono', monospace; letter-spacing: 0.06em;
+    }
+    .tag-green  { background: rgba(104,211,145,0.15); color: var(--green); }
+    .tag-cyan   { background: rgba(99,179,237,0.15);  color: var(--cyan); }
+    .tag-purple { background: rgba(159,122,234,0.15); color: var(--purple); }
+    .tag-amber  { background: rgba(246,173,85,0.15);  color: var(--amber); }
+
+    /* ═══════════════════════════════════════
+       FORM SECTION
+    ═══════════════════════════════════════ */
+    #form-section {
+      position: relative; z-index: 3;
+      background: rgba(3,5,13,0.99);
+      padding: 90px 48px 100px;
+      border-top: 1px solid var(--border);
+    }
+
+    .form-container {
+      display: grid;
+      grid-template-columns: 300px 1fr;
+      gap: 60px;
+      max-width: 960px;
+      margin: 0 auto;
+    }
+
+    /* ── Painel esquerdo ── */
+    .form-info { position: sticky; top: 100px; align-self: start; }
+
+    .form-badge {
+      display: inline-flex; align-items: center; gap: 6px;
+      background: rgba(99,179,237,0.1); border: 1px solid rgba(99,179,237,0.22);
+      border-radius: 100px; padding: 5px 12px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px; letter-spacing: 0.13em;
+      color: var(--cyan); text-transform: uppercase;
+      margin-bottom: 20px;
+    }
+    .form-badge::before {
       content: ''; width: 6px; height: 6px;
       background: var(--cyan); border-radius: 50%;
       box-shadow: 0 0 8px var(--cyan);
       animation: blink 1.5s ease-in-out infinite;
     }
 
-    .card-title {
-      font-size: 26px; font-weight: 700; letter-spacing: -1px;
-      line-height: 1.15; margin-bottom: 6px;
+    .form-info-title {
+      font-size: 26px; font-weight: 700;
+      letter-spacing: -1px; line-height: 1.2; margin-bottom: 14px;
     }
-    .card-title span {
+    .form-info-title span {
       background: linear-gradient(135deg, var(--cyan-bright), var(--purple));
       -webkit-background-clip: text; -webkit-text-fill-color: transparent;
       background-clip: text;
     }
-    .card-sub {
-      font-size: 13px; color: var(--text-muted);
-      font-family: 'JetBrains Mono', monospace;
-    }
-    .card-sub::before { content: '// '; color: var(--text-dim); }
 
-    /* ── Campos ── */
+    .form-info-desc {
+      font-size: 13px; color: var(--text-muted);
+      line-height: 1.7; margin-bottom: 28px;
+    }
+
+    .form-promises { list-style: none; display: flex; flex-direction: column; gap: 12px; }
+    .form-promise {
+      display: flex; align-items: flex-start; gap: 10px;
+      font-size: 13px; color: var(--text-muted); line-height: 1.5;
+    }
+    .promise-icon {
+      width: 26px; height: 26px; flex-shrink: 0;
+      border-radius: 7px; font-size: 12px;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .pi-green  { background: rgba(104,211,145,0.12); }
+    .pi-cyan   { background: rgba(99,179,237,0.12); }
+    .pi-purple { background: rgba(159,122,234,0.12); }
+    .pi-amber  { background: rgba(246,173,85,0.12); }
+
+    .form-divider {
+      height: 1px; background: var(--border); margin: 28px 0;
+    }
+
+    .form-contact-line {
+      display: flex; align-items: center; gap: 8px;
+      font-family: 'JetBrains Mono', monospace; font-size: 11px;
+      color: var(--text-dim);
+    }
+    .form-contact-line span { color: var(--cyan); }
+
+    /* ── Card do formulário ── */
+    .form-card {
+      background: rgba(10,14,28,0.92);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 36px 32px 28px;
+      box-shadow:
+        0 0 0 1px rgba(255,255,255,0.03) inset,
+        0 40px 80px rgba(0,0,0,0.5),
+        0 0 60px rgba(99,179,237,0.04);
+    }
+
+    .form-card-title {
+      font-size: 18px; font-weight: 700; letter-spacing: -0.5px;
+      margin-bottom: 6px;
+    }
+    .form-card-sub {
+      font-size: 12px; color: var(--text-muted);
+      font-family: 'JetBrains Mono', monospace; margin-bottom: 24px;
+    }
+    .form-card-sub::before { content: '// '; color: var(--text-dim); }
+
     .field { margin-bottom: 14px; }
     .field label {
       display: block; font-size: 10px; font-weight: 600;
       letter-spacing: 0.1em; text-transform: uppercase;
-      color: var(--text-muted); margin-bottom: 6px;
+      color: var(--text-muted); margin-bottom: 7px;
       font-family: 'JetBrains Mono', monospace;
       transition: color var(--dur);
     }
     .field:focus-within label { color: var(--cyan); }
 
-    .field input,
-    .field textarea,
-    .field select {
+    .field input, .field textarea, .field select {
       width: 100%;
       background: rgba(255,255,255,0.04);
       border: 1px solid var(--border);
-      border-radius: 10px;
-      padding: 11px 14px;
-      font-size: 14px; font-weight: 400;
-      color: var(--text);
+      border-radius: 10px; padding: 12px 15px;
+      font-size: 14px; font-weight: 400; color: var(--text);
       font-family: 'Space Grotesk', sans-serif;
-      outline: none;
+      outline: none; resize: none;
       transition: border-color var(--dur), box-shadow var(--dur), background var(--dur);
-      resize: none;
     }
-    .field input:focus,
-    .field textarea:focus,
-    .field select:focus {
-      background: rgba(99,179,237,0.06);
+    .field input:focus, .field textarea:focus, .field select:focus {
+      background: rgba(99,179,237,0.05);
       border-color: var(--cyan);
       box-shadow: 0 0 0 3px rgba(99,179,237,0.1);
     }
-    .field input::placeholder,
-    .field textarea::placeholder { color: var(--text-dim); }
+    .field input::placeholder, .field textarea::placeholder { color: var(--text-dim); }
     .field select option { background: #0b0f1a; color: var(--text); }
+    .field textarea { height: 88px; }
 
-    .field textarea { height: 80px; }
+    .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 11px; }
 
-    /* Dois campos lado a lado */
-    .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-
-    /* ── SERVIÇOS — chips de seleção ── */
-    .services-label {
+    .field-group-sep {
+      height: 1px; background: var(--border); margin: 18px 0 16px;
+    }
+    .field-group-label {
       font-size: 10px; font-weight: 600; letter-spacing: 0.1em;
       text-transform: uppercase; color: var(--text-muted);
-      font-family: 'JetBrains Mono', monospace; margin-bottom: 10px;
-      display: block;
+      font-family: 'JetBrains Mono', monospace;
+      margin-bottom: 10px; display: block;
     }
-    .chips {
-      display: flex; flex-wrap: wrap; gap: 7px; margin-bottom: 14px;
-    }
+
+    /* Chips */
+    .chips { display: flex; flex-wrap: wrap; gap: 7px; margin-bottom: 14px; }
     .chip-input { display: none; }
     .chip {
       display: inline-flex; align-items: center; gap: 5px;
-      padding: 6px 12px;
-      background: rgba(255,255,255,0.04);
-      border: 1px solid var(--border);
-      border-radius: 100px;
-      font-size: 12px; font-weight: 500;
-      color: var(--text-muted);
-      cursor: pointer;
-      transition: all .2s;
-      user-select: none;
+      padding: 7px 13px;
+      background: rgba(255,255,255,0.04); border: 1px solid var(--border);
+      border-radius: 100px; font-size: 12px; font-weight: 500;
+      color: var(--text-muted); cursor: pointer;
+      transition: all .2s; user-select: none;
     }
     .chip .chip-icon { font-size: 13px; }
     .chip-input:checked + .chip {
-      background: rgba(99,179,237,0.15);
-      border-color: var(--cyan);
-      color: var(--cyan-bright);
-      box-shadow: 0 0 12px rgba(99,179,237,0.15);
+      background: rgba(99,179,237,0.15); border-color: var(--cyan);
+      color: var(--cyan-bright); box-shadow: 0 0 12px rgba(99,179,237,0.15);
     }
-    .chip:hover {
-      border-color: rgba(99,179,237,0.4);
-      color: var(--text);
-    }
+    .chip:hover { border-color: rgba(99,179,237,0.4); color: var(--text); }
 
-    /* ── Botão Submit ── */
+    /* Botão */
     .btn-submit {
-      width: 100%; padding: 14px 20px; margin-top: 6px;
+      width: 100%; padding: 15px 20px; margin-top: 6px;
       background: linear-gradient(135deg, var(--cyan) 0%, #4299e1 50%, var(--purple) 100%);
-      color: #04060f;
-      border: none; border-radius: 10px;
+      color: #04060f; border: none; border-radius: 10px;
       font-size: 14px; font-weight: 700; font-family: 'Space Grotesk', sans-serif;
       letter-spacing: 0.05em; text-transform: uppercase;
-      cursor: pointer;
-      transition: opacity .25s, transform .2s, box-shadow .25s;
+      cursor: pointer; position: relative; overflow: hidden;
       display: flex; align-items: center; justify-content: center; gap: 8px;
-      position: relative; overflow: hidden;
       box-shadow: 0 4px 24px rgba(99,179,237,0.35);
+      transition: opacity .25s, transform .2s, box-shadow .25s;
     }
     .btn-submit:hover {
-      opacity: .92;
-      transform: translateY(-2px);
+      opacity: .92; transform: translateY(-2px);
       box-shadow: 0 8px 32px rgba(99,179,237,0.5);
     }
     .btn-submit:active { transform: translateY(0); }
@@ -316,7 +599,6 @@
       animation: spin .6s linear infinite;
     }
     .btn-submit.loading .btn-spinner { display: block; }
-    @keyframes spin { to { transform: rotate(360deg); } }
     .btn-ripple {
       position: absolute; border-radius: 50%;
       background: rgba(255,255,255,0.18);
@@ -324,145 +606,61 @@
     }
     @keyframes ripple { to { transform: scale(4); opacity: 0; } }
 
-    /* ═══════════════════════════════════════
-       TICKER DE PROJETOS
-    ═══════════════════════════════════════ */
-    #ticker-wrap {
-      position: relative;
-      z-index: 2;
-      pointer-events: all;
-      padding: 18px 0;
-      overflow: hidden;
-      border-top: 1px solid var(--border);
-      background: rgba(4, 6, 15, 0.65);
-      backdrop-filter: blur(12px);
-      mask-image: linear-gradient(90deg, transparent 0%, black 8%, black 92%, transparent 100%);
+    /* ═══ FOOTER ═══ */
+    #footer {
+      position: relative; z-index: 3;
+      background: #020408;
+      border-top: 1px solid rgba(99,179,237,0.08);
+      padding: 24px 48px;
+      display: flex; align-items: center; justify-content: space-between;
+      font-family: 'JetBrains Mono', monospace; font-size: 11px;
+      color: var(--text-dim);
     }
-
-    .ticker-label {
-      position: absolute;
-      left: 44px; top: 50%;
-      transform: translateY(-50%);
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 10px; letter-spacing: 0.12em;
-      color: var(--text-dim); text-transform: uppercase;
-      z-index: 3;
-      background: rgba(4,6,15,0.8);
-      padding: 4px 8px;
-      border-radius: 4px;
-    }
-
-    .ticker-track {
-      display: flex;
-      gap: 16px;
-      width: max-content;
-      animation: ticker 65s linear infinite;
-      will-change: transform;
-    }
-
-    @keyframes ticker {
-      from { transform: translateX(0); }
-      to   { transform: translateX(-50%); }
-    }
-
-    .project-card {
-      display: flex; align-items: center; gap: 12px;
-      background: rgba(255,255,255,0.04);
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      padding: 10px 18px;
-      white-space: nowrap;
-      cursor: default;
-      transition: border-color .2s, background .2s;
-      flex-shrink: 0;
-    }
-    .project-card:hover {
-      border-color: var(--border-glow);
-      background: rgba(99,179,237,0.06);
-    }
-    .project-icon {
-      font-size: 18px;
-      width: 32px; height: 32px;
-      display: flex; align-items: center; justify-content: center;
-      background: rgba(99,179,237,0.1);
-      border-radius: 8px;
-      flex-shrink: 0;
-    }
-    .project-info { display: flex; flex-direction: column; gap: 2px; }
-    .project-name { font-size: 13px; font-weight: 600; color: var(--text); }
-    .project-type {
-      font-size: 10px; font-family: 'JetBrains Mono', monospace;
-      color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.08em;
-    }
-    .project-tag {
-      font-size: 10px; font-weight: 600;
-      padding: 2px 8px; border-radius: 100px;
-      font-family: 'JetBrains Mono', monospace;
-      letter-spacing: 0.06em;
-    }
-    .tag-green { background: rgba(104,211,145,0.15); color: var(--green); }
-    .tag-cyan  { background: rgba(99,179,237,0.15);  color: var(--cyan); }
-    .tag-purple{ background: rgba(159,122,234,0.15); color: var(--purple); }
-    .tag-amber { background: rgba(246,173,85,0.15);  color: var(--amber); }
+    #footer a { color: var(--cyan); text-decoration: none; }
+    #footer a:hover { opacity: .8; }
 
     /* ═══ TOAST ═══ */
     .toast {
-      position: fixed; bottom: 100px; left: 50%;
+      position: fixed; bottom: 32px; left: 50%;
       transform: translateX(-50%) translateY(60px);
-      background: rgba(10,14,28,0.95);
-      border: 1px solid var(--border-glow);
-      color: var(--text);
+      background: rgba(10,14,28,0.97);
+      border: 1px solid var(--border-glow); color: var(--text);
       padding: 14px 32px; border-radius: 100px;
       font-size: 13px; font-weight: 500;
       font-family: 'JetBrains Mono', monospace;
-      pointer-events: none;
-      transition: transform .4s cubic-bezier(.16,1,.3,1), opacity .4s;
-      opacity: 0; white-space: nowrap; z-index: 100;
+      pointer-events: none; white-space: nowrap; z-index: 200;
       box-shadow: 0 8px 30px rgba(0,0,0,.6), 0 0 30px rgba(99,179,237,0.1);
       backdrop-filter: blur(16px);
+      transition: transform .4s cubic-bezier(.16,1,.3,1), opacity .4s;
+      opacity: 0;
     }
     .toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
 
-    /* ═══ SPOTLIGHT — clareia onde o mouse passa ═══ */
-    #spotlight {
-      position: fixed;
-      inset: 0;
-      z-index: 2;
-      pointer-events: none;
-      background: radial-gradient(
-        circle 100px at var(--mx, 50%) var(--my, 50%),
-        rgba(99, 179, 237, 0.07) 0%,
-        rgba(99, 179, 237, 0.02) 55%,
-        transparent 100%
-      );
-      transition: background 0.05s;
-    }
-
-    /* ═══ PARTÍCULAS ═══ */
-    .fp {
-      position: fixed; border-radius: 50%;
-      pointer-events: none; z-index: 0;
-      animation: fp-rise linear infinite;
-      opacity: 0;
-    }
-    @keyframes fp-rise {
-      0%   { opacity: 0; transform: translateY(0) scale(.8); }
-      10%  { opacity: .8; }
-      90%  { opacity: .4; }
-      100% { opacity: 0; transform: translateY(-110vh) scale(1.3); }
-    }
-
     /* ═══ RESPONSIVO ═══ */
-    @media (max-width: 900px) {
+    @media (max-width: 1024px) {
+      .cases-grid { grid-template-columns: repeat(2, 1fr); }
+      .form-container { grid-template-columns: 1fr; gap: 40px; }
+      .form-info { position: static; }
+      .form-promises { flex-direction: row; flex-wrap: wrap; }
+      .form-promise { width: calc(50% - 6px); }
+    }
+    @media (max-width: 768px) {
+      #topbar { padding: 16px 20px; }
       .nav-links { display: none; }
-      #main { padding: 0 20px; justify-content: center; }
-      .form-card { width: 100%; max-width: 480px; }
+      #hero { padding: 100px 20px 80px; }
+      #cases, #form-section { padding: 60px 20px; }
+      .cases-grid { grid-template-columns: 1fr; }
+      .hero-stats { gap: 0; }
+      .stat { padding-right: 24px; margin-right: 24px; }
+      .stat-num { font-size: 24px; }
     }
     @media (max-width: 520px) {
-      #topbar { padding: 16px 20px; }
-      .form-card { padding: 28px 24px 24px; }
-      .card-title { font-size: 22px; }
+      .hero-title { letter-spacing: -1px; }
+      .hero-actions { flex-direction: column; }
+      .form-card { padding: 28px 20px; }
       .field-row { grid-template-columns: 1fr; }
+      .form-promise { width: 100%; }
+      #footer { flex-direction: column; gap: 8px; text-align: center; }
     }
   </style>
 </head>
@@ -471,7 +669,7 @@
 <!-- Spotlight de mouse -->
 <div id="spotlight"></div>
 
-<!-- SPLINE — tela cheia, robô segue o mouse -->
+<!-- SPLINE — robô fixo em background -->
 <div id="spline-wrap">
   <spline-viewer
     url="https://prod.spline.design/iT3P-qiw0DcuW40E/scene.splinecode"
@@ -479,34 +677,231 @@
   ></spline-viewer>
 </div>
 
-<!-- OVERLAY — conteúdo da página -->
-<div id="overlay">
+<!-- ══════════════════════════
+     TOPBAR FIXO
+══════════════════════════ -->
+<nav id="topbar">
+  <a href="#" class="logo">
+    <div class="logo-dot"></div>
+    <span class="logo-name"><span>VN</span>_DEV</span>
+    &nbsp;·&nbsp; Full Stack
+  </a>
+  <ul class="nav-links">
+    <li><a href="#cases">projetos</a></li>
+    <li><a href="#form-section">orçamento</a></li>
+    <li><a href="#form-section" class="nav-cta">Contratar →</a></li>
+  </ul>
+</nav>
 
-  <!-- TOP BAR -->
-  <nav id="topbar">
-    <div class="logo">
-      <div class="logo-dot"></div>
-      <span class="logo-name"><span>VN</span>_DEV</span>
-      &nbsp;·&nbsp; Full Stack Solutions
+<!-- ══════════════════════════
+     HERO
+══════════════════════════ -->
+<section id="hero">
+  <div class="hero-content">
+
+    <div class="hero-eyebrow">Disponível para novos projetos</div>
+
+    <h1 class="hero-title">
+      Transformo ideias<br>em soluções digitais<br><span class="grad">que funcionam.</span>
+    </h1>
+
+    <p class="hero-desc">
+      Full Stack Developer especializado em automação, integrações, dashboards e apps
+      que resolvem problemas reais de negócio — do desenho ao deploy.
+    </p>
+
+    <div class="hero-actions">
+      <a href="#form-section" class="btn-primary">🚀&nbsp; Solicitar Orçamento</a>
+      <a href="#cases" class="btn-ghost">Ver Projetos &darr;</a>
     </div>
-    <ul class="nav-links">
-      <li><a href="#">projetos</a></li>
-      <li><a href="#">stack</a></li>
-      <li><a href="#">contato</a></li>
-    </ul>
-  </nav>
 
-  <!-- MAIN: FORMULÁRIO -->
-  <div id="main">
+    <div class="hero-stats">
+      <div class="stat">
+        <span class="stat-num">12+</span>
+        <span class="stat-label">Projetos Entregues</span>
+      </div>
+      <div class="stat">
+        <span class="stat-num">3+</span>
+        <span class="stat-label">Anos de Experiência</span>
+      </div>
+      <div class="stat">
+        <span class="stat-num">8+</span>
+        <span class="stat-label">Tecnologias</span>
+      </div>
+    </div>
+
+  </div>
+
+  <a href="#cases" class="scroll-hint">
+    <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+      <path d="M12 5v14M5 12l7 7 7-7"/>
+    </svg>
+    scroll
+  </a>
+</section>
+
+<!-- ══════════════════════════
+     CASES
+══════════════════════════ -->
+<section id="cases">
+
+  <div class="section-header">
+    <div class="section-eyebrow">Portfólio</div>
+    <h2 class="section-title">Projetos que <span>já entreguei</span></h2>
+    <p class="section-sub">// soluções reais, para problemas reais</p>
+  </div>
+
+  <div class="cases-grid">
+
+    <div class="case-card">
+      <div class="case-icon-wrap ic-cyan">📊</div>
+      <div class="case-name">Dashboard Analytics</div>
+      <p class="case-desc">Painel gerencial consolidando KPIs de múltiplas fontes com atualização em tempo real e filtros dinâmicos.</p>
+      <div class="case-tags">
+        <span class="case-tag">Power BI</span>
+        <span class="case-tag">SharePoint</span>
+        <span class="case-tag">DAX</span>
+      </div>
+      <div class="case-footer">
+        <span class="case-client">// Empresa de Logística</span>
+        <span class="case-status s-green">Entregue</span>
+      </div>
+    </div>
+
+    <div class="case-card">
+      <div class="case-icon-wrap ic-purple">🤖</div>
+      <div class="case-name">Bot WhatsApp + N8N</div>
+      <p class="case-desc">Atendimento automatizado com fluxos de conversação inteligentes, integração via webhook e CRM interno.</p>
+      <div class="case-tags">
+        <span class="case-tag">N8N</span>
+        <span class="case-tag">WhatsApp API</span>
+        <span class="case-tag">Webhook</span>
+      </div>
+      <div class="case-footer">
+        <span class="case-client">// E-commerce</span>
+        <span class="case-status s-cyan">Em prod.</span>
+      </div>
+    </div>
+
+    <div class="case-card">
+      <div class="case-icon-wrap ic-green">🌐</div>
+      <div class="case-name">Portal NEO</div>
+      <p class="case-desc">Portal corporativo interno com gestão de conteúdo, controle de acesso por perfil e integração de dados via API.</p>
+      <div class="case-tags">
+        <span class="case-tag">React</span>
+        <span class="case-tag">SharePoint API</span>
+        <span class="case-tag">TypeScript</span>
+      </div>
+      <div class="case-footer">
+        <span class="case-client">// Empresa de Energia</span>
+        <span class="case-status s-green">Entregue</span>
+      </div>
+    </div>
+
+    <div class="case-card">
+      <div class="case-icon-wrap ic-cyan">📱</div>
+      <div class="case-name">App de Agendamento</div>
+      <p class="case-desc">Sistema completo de reservas online com notificações em tempo real, calendário interativo e painel admin.</p>
+      <div class="case-tags">
+        <span class="case-tag">Next.js</span>
+        <span class="case-tag">Supabase</span>
+        <span class="case-tag">Stripe</span>
+      </div>
+      <div class="case-footer">
+        <span class="case-client">// Quadra Esportiva</span>
+        <span class="case-status s-cyan">Em prod.</span>
+      </div>
+    </div>
+
+    <div class="case-card">
+      <div class="case-icon-wrap ic-amber">🔗</div>
+      <div class="case-name">Integração ERP + CRM</div>
+      <p class="case-desc">Sincronização bidirecional entre sistemas legados e CRM, com tratamento de conflitos e logs detalhados.</p>
+      <div class="case-tags">
+        <span class="case-tag">REST API</span>
+        <span class="case-tag">Python</span>
+        <span class="case-tag">Webhooks</span>
+      </div>
+      <div class="case-footer">
+        <span class="case-client">// Indústria</span>
+        <span class="case-status s-green">Entregue</span>
+      </div>
+    </div>
+
+    <div class="case-card">
+      <div class="case-icon-wrap ic-purple">🧠</div>
+      <div class="case-name">IA Classificação de Docs</div>
+      <p class="case-desc">Categorização inteligente de documentos fiscais com modelo de linguagem, reduzindo tempo manual em 80%.</p>
+      <div class="case-tags">
+        <span class="case-tag">Python</span>
+        <span class="case-tag">OpenAI API</span>
+        <span class="case-tag">FastAPI</span>
+      </div>
+      <div class="case-footer">
+        <span class="case-client">// Contabilidade</span>
+        <span class="case-status s-purple">Beta</span>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- TICKER -->
+  <div id="ticker-wrap">
+    <div class="ticker-track" id="tickerTrack"></div>
+  </div>
+
+</section>
+
+<!-- ══════════════════════════
+     FORMULÁRIO
+══════════════════════════ -->
+<section id="form-section">
+  <div class="form-container">
+
+    <!-- Painel de informações -->
+    <div class="form-info">
+      <div class="form-badge">Orçamento Gratuito</div>
+
+      <h2 class="form-info-title">
+        Vamos construir<br>algo <span>incrível</span>?
+      </h2>
+
+      <p class="form-info-desc">
+        Preencha o formulário com os detalhes do seu projeto. Analiso cada proposta
+        individualmente e entro em contato em até 24h.
+      </p>
+
+      <ul class="form-promises">
+        <li class="form-promise">
+          <div class="promise-icon pi-green">✓</div>
+          <span>Resposta em até 24h</span>
+        </li>
+        <li class="form-promise">
+          <div class="promise-icon pi-cyan">💬</div>
+          <span>Reunião de alinhamento gratuita</span>
+        </li>
+        <li class="form-promise">
+          <div class="promise-icon pi-purple">📋</div>
+          <span>Proposta detalhada sem compromisso</span>
+        </li>
+        <li class="form-promise">
+          <div class="promise-icon pi-amber">⚡</div>
+          <span>Entrega ágil e com acompanhamento</span>
+        </li>
+      </ul>
+
+      <div class="form-divider"></div>
+
+      <div class="form-contact-line">
+        WhatsApp: <span>(11) 9 XXXX-XXXX</span>
+      </div>
+    </div>
+
+    <!-- Card do formulário -->
     <div class="form-card">
 
-      <div class="card-header">
-        <div class="card-badge">Solicitar Orçamento</div>
-        <h1 class="card-title">
-          Vamos criar algo<br><span>incrível juntos?</span>
-        </h1>
-        <p class="card-sub">preencha e retorno em até 24h</p>
-      </div>
+      <div class="form-card-title">Solicitar Orçamento</div>
+      <p class="form-card-sub">preencha e retorno em até 24h</p>
 
       <form id="quoteForm" novalidate>
 
@@ -528,16 +923,17 @@
           <input type="email" id="email" placeholder="voce@empresa.com" required>
         </div>
 
-        <!-- Empresa (opcional) -->
+        <!-- Empresa -->
         <div class="field">
-          <label for="empresa">empresa <span style="opacity:.4;font-size:9px">(opcional)</span></label>
+          <label for="empresa">empresa <span style="opacity:.35;font-size:9px">(opcional)</span></label>
           <input type="text" id="empresa" placeholder="Nome da empresa ou projeto">
         </div>
 
-        <!-- Serviços — chips -->
-        <span class="services-label">qual solução você precisa?</span>
-        <div class="chips" id="chips-wrap">
+        <div class="field-group-sep"></div>
+        <span class="field-group-label">qual solução você precisa?</span>
 
+        <!-- Chips de serviços -->
+        <div class="chips" id="chips-wrap">
           <input class="chip-input" type="checkbox" id="s1" name="servicos" value="Automação de Processos">
           <label class="chip" for="s1"><span class="chip-icon">⚙️</span> Automação</label>
 
@@ -561,8 +957,9 @@
 
           <input class="chip-input" type="checkbox" id="s8" name="servicos" value="Consultoria Técnica">
           <label class="chip" for="s8"><span class="chip-icon">🧠</span> Consultoria</label>
-
         </div>
+
+        <div class="field-group-sep"></div>
 
         <!-- Orçamento -->
         <div class="field">
@@ -583,46 +980,45 @@
           <textarea id="descricao" placeholder="Conte o que você precisa, problema a resolver, prazo desejado..."></textarea>
         </div>
 
-        <!-- Submit -->
         <button type="submit" class="btn-submit" id="btnSubmit">
-          <span class="btn-text">🚀&nbsp; Solicitar Orçamento</span>
+          <span class="btn-text">🚀&nbsp; Enviar Solicitação</span>
           <div class="btn-spinner"></div>
         </button>
 
       </form>
-
     </div>
-  </div>
 
-  <!-- TICKER DE PROJETOS -->
-  <div id="ticker-wrap">
-    <span class="ticker-label">// projetos entregues</span>
-    <div class="ticker-track" id="tickerTrack">
-      <!-- Projetos (duplicados para loop infinito) -->
-    </div>
   </div>
+</section>
 
-</div>
+<!-- ══════════════════════════
+     FOOTER
+══════════════════════════ -->
+<footer id="footer">
+  <span>© 2025 <span style="color:var(--cyan)">VN_DEV</span> · Vinicius Machado</span>
+  <span>Full Stack · Automação · IA · Power Platform</span>
+  <a href="#hero">↑ Voltar ao topo</a>
+</footer>
 
 <div class="toast" id="toast"></div>
 
 <script>
 /* ═══════════════════════════════════
-   PROJETOS — DADOS DO TICKER
+   TICKER DE PROJETOS
 ═══════════════════════════════════ */
 const projects = [
-  { icon:'📊', name:'Dashboard Analytics',      type:'Power BI + SharePoint',   tag:'green',  label:'Entregue' },
-  { icon:'🤖', name:'Bot WhatsApp + N8N',        type:'Automação via Webhook',    tag:'cyan',   label:'Em prod.' },
-  { icon:'⚙️',  name:'Automação de Cadastros',   type:'Power Automate + Forms',  tag:'purple', label:'Entregue' },
-  { icon:'🌐', name:'Portal NEO',                type:'React + SharePoint API',  tag:'green',  label:'Entregue' },
-  { icon:'📱', name:'App de Agendamento',         type:'Supabase + Next.js',      tag:'cyan',   label:'Em prod.' },
-  { icon:'🔗', name:'Integração ERP + CRM',      type:'REST API + Webhooks',      tag:'amber',  label:'Entregue' },
-  { icon:'🧠', name:'IA Classificação de Docs',  type:'Python + OpenAI API',     tag:'purple', label:'Beta' },
-  { icon:'📋', name:'Sistema de OS Digital',     type:'React + Firebase',         tag:'green',  label:'Entregue' },
-  { icon:'⚡',  name:'Pipeline de E-mails',       type:'Power Automate + Outlook','tag':'amber', label:'Entregue' },
-  { icon:'🏟️', name:'Quadra Livre v2',           type:'Next.js + Supabase',       tag:'cyan',   label:'Live' },
-  { icon:'📈', name:'Relatório de Entregas',     type:'React + MS Lists',         tag:'green',  label:'Entregue' },
-  { icon:'💬', name:'Chatbot Atendimento',       type:'N8N + WhatsApp API',       tag:'purple', label:'Em prod.' },
+  { icon:'📊', name:'Dashboard Analytics',    type:'Power BI + SharePoint',  tag:'green',  label:'Entregue' },
+  { icon:'🤖', name:'Bot WhatsApp + N8N',      type:'Automação via Webhook',  tag:'cyan',   label:'Em prod.' },
+  { icon:'⚙️',  name:'Automação de Cadastros', type:'Power Automate + Forms', tag:'purple', label:'Entregue' },
+  { icon:'🌐', name:'Portal NEO',              type:'React + SharePoint API', tag:'green',  label:'Entregue' },
+  { icon:'📱', name:'App de Agendamento',      type:'Supabase + Next.js',     tag:'cyan',   label:'Em prod.' },
+  { icon:'🔗', name:'Integração ERP + CRM',   type:'REST API + Webhooks',    tag:'amber',  label:'Entregue' },
+  { icon:'🧠', name:'IA Classificação Docs',  type:'Python + OpenAI API',    tag:'purple', label:'Beta' },
+  { icon:'📋', name:'Sistema de OS Digital',  type:'React + Firebase',       tag:'green',  label:'Entregue' },
+  { icon:'⚡',  name:'Pipeline de E-mails',    type:'Power Automate + Outlook',tag:'amber', label:'Entregue' },
+  { icon:'🏟️', name:'Quadra Livre v2',        type:'Next.js + Supabase',     tag:'cyan',   label:'Live' },
+  { icon:'📈', name:'Relatório de Entregas',  type:'React + MS Lists',       tag:'green',  label:'Entregue' },
+  { icon:'💬', name:'Chatbot Atendimento',    type:'N8N + WhatsApp API',     tag:'purple', label:'Em prod.' },
 ];
 
 const tagClass = { green:'tag-green', cyan:'tag-cyan', purple:'tag-purple', amber:'tag-amber' };
@@ -639,12 +1035,32 @@ function buildCard(p) {
 }
 
 const track = document.getElementById('tickerTrack');
-// Duplica para loop infinito
-const html = [...projects, ...projects].map(buildCard).join('');
-track.innerHTML = html;
+track.innerHTML = [...projects, ...projects].map(buildCard).join('');
 
 /* ═══════════════════════════════════
-   SPOTLIGHT — mouse normal + brilho
+   TOPBAR SCROLL
+═══════════════════════════════════ */
+const topbar = document.getElementById('topbar');
+window.addEventListener('scroll', () => {
+  topbar.classList.toggle('scrolled', window.scrollY > 60);
+}, { passive: true });
+
+/* ═══════════════════════════════════
+   INTERSECTION OBSERVER — case cards
+═══════════════════════════════════ */
+const cards = document.querySelectorAll('.case-card');
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach((entry, i) => {
+    if (entry.isIntersecting) {
+      setTimeout(() => entry.target.classList.add('visible'), i * 80);
+      observer.unobserve(entry.target);
+    }
+  });
+}, { threshold: 0.1 });
+cards.forEach(c => observer.observe(c));
+
+/* ═══════════════════════════════════
+   SPOTLIGHT — mouse
 ═══════════════════════════════════ */
 const spotlight = document.getElementById('spotlight');
 document.addEventListener('mousemove', e => {
@@ -663,10 +1079,8 @@ for (let i = 0; i < 18; i++) {
   const col = colors[Math.floor(Math.random() * colors.length)];
   p.style.cssText = `
     width:${sz}px;height:${sz}px;
-    left:${Math.random()*100}%;
-    bottom:-10px;
-    background:${col};
-    box-shadow:0 0 ${sz*4}px ${col};
+    left:${Math.random()*100}%;bottom:-10px;
+    background:${col};box-shadow:0 0 ${sz*4}px ${col};
     animation-duration:${12+Math.random()*18}s;
     animation-delay:${Math.random()*20}s;
   `;
@@ -698,14 +1112,13 @@ document.getElementById('btnSubmit').addEventListener('click', function(e) {
 });
 
 /* ═══════════════════════════════════
-   SUBMIT DO FORMULÁRIO
+   SUBMIT
 ═══════════════════════════════════ */
 document.getElementById('quoteForm').addEventListener('submit', async function(e) {
   e.preventDefault();
   const nome     = document.getElementById('nome').value.trim();
   const email    = document.getElementById('email').value.trim();
   const whatsapp = document.getElementById('whatsapp').value.trim();
-  const desc     = document.getElementById('descricao').value.trim();
   const servicos = [...document.querySelectorAll('.chip-input:checked')].map(c => c.value);
 
   if (!nome || !email || !whatsapp) {
