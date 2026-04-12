@@ -1244,20 +1244,12 @@ _Enviado pelo formulário do portfólio_`;
   btn.classList.add('loading');
 
   try {
-    await new Promise((resolve, reject) => {
-      const xhr = new XMLHttpRequest();
-      xhr.withCredentials = true;
-      xhr.addEventListener('readystatechange', function () {
-        if (this.readyState === this.DONE) {
-          this.status >= 200 && this.status < 300 ? resolve() : reject(this.status);
-        }
-      });
-      xhr.open('POST', 'https://genialchat.uazapi.com/send/text');
-      xhr.setRequestHeader('Accept', 'application/json');
-      xhr.setRequestHeader('token', '35b507bb-c4f0-4f13-9260-c4b4f07f2d92');
-      xhr.setRequestHeader('Content-Type', 'application/json');
-      xhr.send(JSON.stringify({ number: '5562999878349', text: mensagem }));
+    const res = await fetch('/api/whatsapp', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text: mensagem }),
     });
+    if (!res.ok) throw new Error(res.status);
 
     showToast(`✓ Solicitação enviada, ${nome.split(' ')[0]}! Entro em contato em breve 🚀`);
     this.reset();
