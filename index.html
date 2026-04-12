@@ -941,7 +941,7 @@
           </div>
           <div class="field">
             <label for="whatsapp">whatsapp</label>
-            <input type="tel" id="whatsapp" placeholder="(11) 9 9999-9999" required>
+            <input type="tel" id="whatsapp" placeholder="(11) 99999-9999" maxlength="15" required>
           </div>
         </div>
 
@@ -1031,6 +1031,21 @@
 <div class="toast" id="toast"></div>
 
 <script>
+/* ═══════════════════════════════════
+   MÁSCARA WHATSAPP
+═══════════════════════════════════ */
+document.getElementById('whatsapp').addEventListener('input', function () {
+  let v = this.value.replace(/\D/g, '').slice(0, 11);
+  if (v.length > 6) {
+    v = `(${v.slice(0,2)}) ${v.slice(2,7)}-${v.slice(7)}`;
+  } else if (v.length > 2) {
+    v = `(${v.slice(0,2)}) ${v.slice(2)}`;
+  } else if (v.length > 0) {
+    v = `(${v}`;
+  }
+  this.value = v;
+});
+
 /* ═══════════════════════════════════
    ESCONDE WATERMARK DO SPLINE
 ═══════════════════════════════════ */
@@ -1184,7 +1199,7 @@ document.getElementById('quoteForm').addEventListener('submit', async function(e
 
   const nome     = document.getElementById('nome').value.trim();
   const email    = document.getElementById('email').value.trim();
-  const whatsapp = document.getElementById('whatsapp').value.trim();
+  const whatsapp = document.getElementById('whatsapp').value.trim(); // exibe formatado na mensagem
   const empresa  = document.getElementById('empresa').value.trim();
   const budget   = document.getElementById('budget').value;
   const desc     = document.getElementById('descricao').value.trim();
