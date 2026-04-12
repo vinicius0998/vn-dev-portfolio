@@ -44,15 +44,6 @@
     }
     spline-viewer { width: 100%; height: 100%; display: block; }
 
-    /* Cobre watermark do Spline */
-    #spline-cover {
-      position: fixed;
-      bottom: 0; right: 0;
-      width: 280px; height: 80px;
-      background: #04060f;
-      z-index: 10;
-      pointer-events: none;
-    }
 
     /* ═══ SPOTLIGHT ═══ */
     #spotlight {
@@ -699,7 +690,6 @@
     loading-anim-type="none"
   ></spline-viewer>
 </div>
-<div id="spline-cover"></div>
 
 <!-- ══════════════════════════
      TOPBAR FIXO
@@ -1032,20 +1022,37 @@
 ═══════════════════════════════════ */
 function hideSplineLogo() {
   const viewer = document.querySelector('spline-viewer');
-  if (!viewer) return;
+  if (!viewer || !viewer.shadowRoot) return false;
   const root = viewer.shadowRoot;
-  if (!root) return;
-  const selectors = ['#logo', 'a[href*="spline"]', '[class*="logo"]', '[id*="logo"]'];
-  selectors.forEach(sel => {
-    root.querySelectorAll(sel).forEach(el => { el.style.display = 'none'; });
+
+  // Injeta <style> no shadow root — funciona mesmo após hover
+  if (!root.querySelector('#vn-hide-logo')) {
+    const s = document.createElement('style');
+    s.id = 'vn-hide-logo';
+    s.textContent = `
+      #logo, a[href*="spline"], [class*="watermark"], [id*="watermark"],
+      [class*="logo"]:not(canvas), [id*="logo"] {
+        display: none !important;
+        opacity: 0 !important;
+        pointer-events: none !important;
+      }
+    `;
+    root.appendChild(s);
+  }
+
+  // Força display:none em cada elemento encontrado
+  ['#logo','a[href*="spline"]','[class*="watermark"]'].forEach(sel => {
+    root.querySelectorAll(sel).forEach(el => {
+      el.style.setProperty('display','none','important');
+    });
   });
+  return true;
 }
-// Tenta logo e repete até sumir
-let _attempts = 0;
-const _logoInterval = setInterval(() => {
-  hideSplineLogo();
-  if (++_attempts > 20) clearInterval(_logoInterval);
-}, 500);
+
+let _att = 0;
+const _iv = setInterval(() => {
+  if (hideSplineLogo() || ++_att > 30) clearInterval(_iv);
+}, 400);
 
 /* ═══════════════════════════════════
    TICKER DE PROJETOS
