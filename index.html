@@ -1177,13 +1177,17 @@ document.getElementById('btnSubmit').addEventListener('click', function(e) {
 });
 
 /* ═══════════════════════════════════
-   SUBMIT
+   SUBMIT — envia para WhatsApp via UZapi
 ═══════════════════════════════════ */
 document.getElementById('quoteForm').addEventListener('submit', async function(e) {
   e.preventDefault();
+
   const nome     = document.getElementById('nome').value.trim();
   const email    = document.getElementById('email').value.trim();
   const whatsapp = document.getElementById('whatsapp').value.trim();
+  const empresa  = document.getElementById('empresa').value.trim();
+  const budget   = document.getElementById('budget').value;
+  const desc     = document.getElementById('descricao').value.trim();
   const servicos = [...document.querySelectorAll('.chip-input:checked')].map(c => c.value);
 
   if (!nome || !email || !whatsapp) {
@@ -1195,14 +1199,60 @@ document.getElementById('quoteForm').addEventListener('submit', async function(e
     return;
   }
 
+  const budgetLabel = {
+    '500-1500':  'R$ 500 – R$ 1.500',
+    '1500-3000': 'R$ 1.500 – R$ 3.000',
+    '3000-6000': 'R$ 3.000 – R$ 6.000',
+    '6000+':     'Acima de R$ 6.000',
+    'conversar': 'Prefere conversar primeiro',
+  };
+
+  const mensagem =
+`🚀 *Novo pedido de orçamento — VN_DEV*
+
+👤 *Nome:* ${nome}
+📱 *WhatsApp:* ${whatsapp}
+📧 *E-mail:* ${email}${empresa ? `\n🏢 *Empresa:* ${empresa}` : ''}
+
+🛠️ *Soluções desejadas:*
+${servicos.map(s => `  • ${s}`).join('\n')}
+
+💰 *Investimento:* ${budgetLabel[budget] || 'Não informado'}
+
+📝 *Descrição:*
+${desc || 'Não informada'}
+
+---
+_Enviado pelo formulário do portfólio_`;
+
   const btn = document.getElementById('btnSubmit');
   btn.classList.add('loading');
-  await new Promise(r => setTimeout(r, 2000));
-  btn.classList.remove('loading');
 
-  showToast(`✓ Solicitação enviada, ${nome.split(' ')[0]}! Entro em contato em breve 🚀`);
-  this.reset();
-  document.querySelectorAll('.chip-input').forEach(c => c.checked = false);
+  try {
+    await new Promise((resolve, reject) => {
+      const xhr = new XMLHttpRequest();
+      xhr.withCredentials = true;
+      xhr.addEventListener('readystatechange', function () {
+        if (this.readyState === this.DONE) {
+          this.status >= 200 && this.status < 300 ? resolve() : reject(this.status);
+        }
+      });
+      xhr.open('POST', 'https://genialchat.uazapi.com/send/text');
+      xhr.setRequestHeader('Accept', 'application/json');
+      xhr.setRequestHeader('token', '35b507bb-c4f0-4f13-9260-c4b4f07f2d92');
+      xhr.setRequestHeader('Content-Type', 'application/json');
+      xhr.send(JSON.stringify({ number: '5562999878349', text: mensagem }));
+    });
+
+    showToast(`✓ Solicitação enviada, ${nome.split(' ')[0]}! Entro em contato em breve 🚀`);
+    this.reset();
+    document.querySelectorAll('.chip-input').forEach(c => c.checked = false);
+
+  } catch (err) {
+    showToast('⚠  Erro ao enviar. Tente pelo WhatsApp diretamente.');
+  } finally {
+    btn.classList.remove('loading');
+  }
 });
 </script>
 
