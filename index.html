@@ -44,6 +44,17 @@
     }
     spline-viewer { width: 100%; height: 100%; display: block; }
 
+    /* Cobre watermark canvas do Spline — z-index 1 fica abaixo de todo
+       conteúdo da página (z-index 2+) mas acima do canvas (z-index 0) */
+    #spline-cover {
+      position: fixed;
+      bottom: 0; right: 0;
+      width: 240px; height: 70px;
+      background: #04060f;
+      z-index: 1;
+      pointer-events: none;
+    }
+
 
     /* ═══ SPOTLIGHT ═══ */
     #spotlight {
@@ -682,6 +693,9 @@
 
 <!-- Spotlight de mouse -->
 <div id="spotlight"></div>
+
+<!-- Cobre watermark do Spline (abaixo do conteúdo, acima do canvas) -->
+<div id="spline-cover"></div>
 
 <!-- SPLINE — robô fixo em background -->
 <div id="spline-wrap">
